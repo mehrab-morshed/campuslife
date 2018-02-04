@@ -1,4 +1,3 @@
-from collections import defaultdict
 import datetime
 import pandas as pd
 import numpy as np
@@ -6,7 +5,10 @@ import numpy as np
 def main():
   df = loadData("./day1.csv")
   user_epochs = parseEpochs(df, 1)
-  print user_epochs
+
+  # convert dict to df and write to csv
+  df = pd.DataFrame(user_epochs)
+  df.to_csv('userepochs.csv', sep='\t', index=False)
 
 def parseEpochs(df, minutes):
   # Create a dataframe with label and per minute energy value |l| *
@@ -18,8 +20,8 @@ def parseEpochs(df, minutes):
   minute_vals = []
   for index, row in df.iterrows():
     if row['label'] not in user_epochs:
-      # first value is energy, second value is number of samples
-      user_epochs[row['label']] = [[0, 0] for i in range((60/minutes)*24)]
+      user_epochs[row['label']] = [0 for i in range((60/minutes)*24)]
+      user_epochs[row['label']+'count'] = [0 for i in range((60/minutes)*24)]
 
     row_date = datetime.datetime.fromtimestamp(row['timestamp']/1000.0)
     current_minute = row_date.hour*60 + row_date.minute
@@ -32,8 +34,8 @@ def parseEpochs(df, minutes):
     if current_minute - prev_minute >= minutes or current_label != prev_label:
       np_arr = np.asarray(minute_vals)
       num_samples = np_arr.shape[0]
-      user_epochs[prev_label][prev_minute][0] = np.mean(np.sum((np_arr ** 2), axis=1), axis=0)
-      user_epochs[prev_label][prev_minute][1] = num_samples
+      user_epochs[prev_label][prev_minute] = np.mean(np.sum((np_arr ** 2), axis=1), axis=0)
+      user_epochs[prev_label+'count'][prev_minute] = num_samples
 
       minute_vals = []
       prev_minute = current_minute
@@ -44,8 +46,8 @@ def parseEpochs(df, minutes):
   if len(minute_vals) > 0:
     np_arr = np.asarray(minute_vals)
     num_samples = np_arr.shape[0]
-    user_epochs[prev_label][prev_minute][0] = np.mean(np.sum((np_arr ** 2), axis=1), axis=0)
-    user_epochs[prev_label][prev_minute][1] = num_samples
+    user_epochs[prev_label][prev_minute] = np.mean(np.sum((np_arr ** 2), axis=1), axis=0)
+    user_epochs[prev_label+'count'][prev_minute] = num_samples
 
   return user_epochs
 

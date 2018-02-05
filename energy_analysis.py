@@ -3,12 +3,30 @@ import pandas as pd
 import numpy as np
 
 def main():
-  df = loadData("./day1.csv")
-  user_epochs = parseEpochs(df, 1)
+  df = loadData("./day8.csv")
+
+  # old version
+  # user_epochs = parseEpochs(df, 1)
 
   # convert dict to df and write to csv
-  df = pd.DataFrame(user_epochs)
-  df.to_csv('userepochs.csv', sep='\t', index=False)
+  # df = pd.DataFrame(user_epochs)
+  # df.to_csv('userepochs.csv', sep='\t', index=False)
+
+  # v2
+  energy_df = parseEpochsV2(df)
+  # write to csv
+  energy_df.to_csv('userepochs-day8.csv', sep='\t')
+
+
+def parseEpochsV2(df):
+  df['x'] = df['x'] ** 2
+  df['y'] = df['y'] ** 2
+  df['z'] = df['z'] ** 2
+  df['xyz_square'] = ((df['x']**2) + (df['y']**2) + (df['z']**2)).apply(np.sqrt)
+  minute_groups = df.groupby([df.label, df.timestamp.dt.hour, df.timestamp.dt.minute])
+  # key is (label, hour, minute) and value is mean, count
+  energy_df = minute_groups['xyz_square'].agg(['mean', 'count'])
+  return energy_df
 
 def parseEpochs(df, minutes):
   # Create a dataframe with label and per minute energy value |l| *
@@ -52,7 +70,7 @@ def parseEpochs(df, minutes):
   return user_epochs
 
 def loadData(filepath):
-  return pd.read_csv(filepath, sep='\t')
+  return pd.read_csv(filepath, sep='\t', parse_dates=['timestamp'])
 
 if __name__ == '__main__':
   main()

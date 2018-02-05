@@ -3,11 +3,54 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def main():
-  df = loadData('userepochs.csv')
-  plotData(df)
+  df = loadData('userepochs-day8.csv')
+  plotDataV2(df)
 
 def loadData(filepath):
   return pd.read_csv(filepath, sep='\t')
+
+def plotDataV2(df):
+  plotdf = pd.DataFrame()
+  for group in df.groupby([df.label]):
+    groupdf = pd.DataFrame()
+    groupdf[group[0]] = group[1]['mean']
+    groupdf[group[0]+'-minute'] = group[1]['timestamp']*60 + group[1]['timestamp.1']
+    groupdf = groupdf.set_index(group[0]+'-minute').reindex(range(0, 60*24)).fillna(0).reset_index()
+
+    plotdf[group[0]] = groupdf[group[0]]
+
+  fig, ax = plt.subplots()
+  ax.set_title('Click on legend line to toggle line on/off')
+  lines = []
+  for column in plotdf.columns:
+    line, = ax.plot(np.arange(60 * 24)+1, plotdf[column], lw=1.5, label=column, linestyle='-', marker=',', markersize=5)
+    lines.append(line)
+
+  leg = ax.legend(loc='upper left', fancybox=True, shadow=True)
+  leg.get_frame().set_alpha(0.4)
+  lined = dict()
+  for legline, origline in zip(leg.get_lines(), lines):
+    legline.set_picker(5)  # 5 pts tolerance
+    lined[legline] = origline
+
+  def onpick(event):
+    # on the pick event, find the orig line corresponding to the
+    # legend proxy line, and toggle the visibility
+    legline = event.artist
+    origline = lined[legline]
+    vis = not origline.get_visible()
+    origline.set_visible(vis)
+    # Change the alpha on the line in the legend so we can see what lines
+    # have been toggled
+    if vis:
+      legline.set_alpha(1.0)
+    else:
+      legline.set_alpha(0.2)
+    fig.canvas.draw()
+
+  fig.canvas.mpl_connect('pick_event', onpick)
+
+  plt.show()
 
 def plotData(df):
   labels = []

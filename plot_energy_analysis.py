@@ -3,13 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def main():
-  df = loadData('userepochs-day8.csv')
-  plotDataV2(df)
+  #FIXME for loop
+  #for i in range(6, 16):
+  for i in range(6, 10):
+    df = loadData("userepochs-day"+str(i)+".csv")
+    plotDataV2(df, i)
+
+  plt.show()
 
 def loadData(filepath):
   return pd.read_csv(filepath, sep='\t')
 
-def plotDataV2(df):
+def plotDataV2(df, i):
   plotdf = pd.DataFrame()
   for group in df.groupby([df.label]):
     groupdf = pd.DataFrame()
@@ -20,6 +25,7 @@ def plotDataV2(df):
     plotdf[group[0]] = groupdf[group[0]]
 
   fig, ax = plt.subplots()
+  fig.canvas.set_window_title('Day '+str(i))
   ax.set_title('Click on legend line to toggle line on/off')
   lines = []
   for column in plotdf.columns:
@@ -49,8 +55,6 @@ def plotDataV2(df):
     fig.canvas.draw()
 
   fig.canvas.mpl_connect('pick_event', onpick)
-
-  plt.show()
 
 def plotData(df):
   labels = []

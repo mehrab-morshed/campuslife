@@ -3,19 +3,21 @@ import pandas as pd
 import numpy as np
 
 def main():
-  df = loadData("./day8.csv")
+  #FIXME for loop
+  for i in range(6, 16):
+    df = loadData("./day"+str(i)+".csv")
 
-  # old version
-  # user_epochs = parseEpochs(df, 1)
+    # old version
+    # user_epochs = parseEpochs(df, 1)
 
-  # convert dict to df and write to csv
-  # df = pd.DataFrame(user_epochs)
-  # df.to_csv('userepochs.csv', sep='\t', index=False)
+    # convert dict to df and write to csv
+    # df = pd.DataFrame(user_epochs)
+    # df.to_csv('userepochs.csv', sep='\t', index=False)
 
-  # v2
-  energy_df = parseEpochsV2(df)
-  # write to csv
-  energy_df.to_csv('userepochs-day8.csv', sep='\t')
+    # v2
+    energy_df = parseEpochsV2(df)
+    # write to csv
+    energy_df.to_csv("userepochs-day"+str(i)+".csv", sep='\t')
 
 
 def parseEpochsV2(df):

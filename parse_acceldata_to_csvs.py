@@ -3,7 +3,7 @@ import pandas as pd
 
 def main():
   # loadDataPerDate("./accel.txt", 1)
-  loadDataForDays("./accel.txt", 4)
+  loadDataForDays("./accel.txt", 10)
 
 # https://stackoverflow.com/questions/28239529/conditional-row-read-of-csv-in-pandas
 def valid(chunks, startday, numdays):

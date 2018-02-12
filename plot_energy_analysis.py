@@ -1,12 +1,12 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+from thresholds_config import config
 
 def main():
   #FIXME for loop
   #for i in range(6, 16):
-  for i in range(6, 11):
+  for i in range(10, 11):
     df = loadData("userepochs-day"+str(i)+".csv")
     plotDataV2(df, i)
   plt.show()
@@ -39,7 +39,7 @@ def plotDataV2(df, i):
       continue
     line, = ax.plot(xrange, plotdf[column], lw=1.5, label=column, linestyle='-', marker=',', markersize=5)
     # poly = ax.fill_between(xrange, plotdf[column], where=plotdf[column]>10.05, facecolor=line.get_color(), alpha=0.5)
-    poly = ax.fill_between(xrange, plotdf[column], where=(plotdf[column]>9.6).values & (plotdf[column+'-delta'].abs() > 0.025).values, facecolor=line.get_color(), alpha=0.5)
+    poly = ax.fill_between(xrange, plotdf[column], where=(plotdf[column]>config['magnitude_threshold']).values & (plotdf[column+'-delta'].abs()>config['delta_threshold']).values, facecolor=line.get_color(), alpha=0.5)
     lines.append((line, poly))  # 0 is the line, 1 is the filled polygon
 
   # set x axis to display time

@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 def amvd(df):
   # group by minutes and compute minute means
@@ -18,18 +19,31 @@ def amvd(df):
   df_minus_mean['magnitude'] = ((df['x'] ** 2) + (df['y'] ** 2) + (df['z'] ** 2)).apply(np.sqrt)
 
   # group by label and minute and fill missing minute values
-  minute_groups = df_minus_mean.groupby([df_minus_mean.label, df_minus_mean.minute])
+  minute_groups = df_minus_mean.groupby([df_minus_mean.device_id, df_minus_mean.minute])
   xrange = np.arange(60 * 24)
   # key is (label, minute) and value is mean, count
   energy_df = minute_groups['magnitude'].agg(['mean', 'count']).reset_index()
-  iterables = [energy_df['label'].unique(), xrange]
-  energy_df = energy_df.set_index(['label', 'minute'])
-  energy_df = energy_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['label', 'minute']), fill_value=0).reset_index()
+  iterables = [energy_df['device_id'].unique(), xrange]
+  energy_df = energy_df.set_index(['device_id', 'minute'])
+  energy_df = energy_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['device_id', 'minute']), fill_value=0).reset_index()
   # compute delta
-  energy_df = energy_df.set_index(['label', 'minute'])
+  energy_df = energy_df.set_index(['device_id', 'minute'])
   energy_df['delta'] = energy_df['mean'] - energy_df['mean'].shift(-1)
   # set delta to 0 where mean is 0 FIXME see if this can be improved - compiler throws a userful warning
   energy_df['delta'][energy_df['mean'] == 0] = 0
   energy_df = energy_df.reset_index()
 
   return energy_df
+
+def googleactivity(df):
+  df = df[df['confidence'] > 50] # select entries where confidence is greater than 50
+  df['minute'] = df.timestamp.dt.hour*60 + df.timestamp.dt.minute
+  minute_groups = df.groupby([df.device_id, df.minute])
+  xrange = np.arange(60 * 24)
+
+  googleactivity_df = minute_groups['activity_name'].agg(lambda x: stats.mode(x)[0]).reset_index()
+  iterables = [googleactivity_df['device_id'].unique(), xrange]
+  googleactivity_df = googleactivity_df.set_index(['device_id', 'minute'])
+  googleactivity_df = googleactivity_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['device_id', 'minute']), fill_value=0).reset_index()
+
+  return googleactivity_df

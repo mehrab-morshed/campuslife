@@ -10,7 +10,7 @@ def main():
 #    df = loadData("userepochs-day"+str(i)+".csv")
 #    plotdatav2(df, i)
 #  plt.show()
-  df = loadData('test.txt')
+  df = loadData('gregory.txt')
   plotDataV2(df, 1)
   plt.show()
 

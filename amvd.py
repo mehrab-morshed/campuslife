@@ -47,3 +47,16 @@ def googleactivity(df):
   googleactivity_df = googleactivity_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['device_id', 'minute']), fill_value=0).reset_index()
 
   return googleactivity_df
+
+def quedget_responses(df):
+  df = df[df['question_set'] is in ['Emotion Regulation', 'State Self Esteem', 'Dartmouth']] # select entries where confidence is greater than 50
+  df['minute'] = df.timestamp.dt.hour*60 + df.timestamp.dt.minute
+  minute_groups = df.groupby([df.device_id, df.minute])
+  xrange = np.arange(60 * 24)
+
+  iterables = [minute_groups['device_id'].unique(), xrange]
+  quedget_df = quedget_df.set_index(['device_id', 'minute'])
+  quedget_df = quedget_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['device_id', 'minute']), fill_value=0).reset_index()
+
+  return quedget_df
+

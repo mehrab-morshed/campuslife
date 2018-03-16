@@ -1,6 +1,5 @@
 import pandas as pd
-from amvd import amvd
-from amvd import googleactivity
+from amvd import *
 
 def main():
   for i in range(18, 25):
@@ -15,7 +14,7 @@ def main():
 
     energy_df = energy_df.merge(googleactivity_df)
     energy_df = energy_df.merge(quedget_df)
-    energy_df.to_csv("userepochs-day" + str(i) + ".csv", sep='\t')
+    energy_df.to_csv("userepochs-day" + str(i) + ".csv", sep='\t', index=False)
 
 def loadData(filepath):
   return pd.read_csv(filepath, sep='\t', parse_dates=['timestamp'])

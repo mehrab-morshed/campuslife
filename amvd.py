@@ -49,13 +49,15 @@ def googleactivity(df):
   return googleactivity_df
 
 def quedget_responses(df):
-  df = df[df['question_set'] is in ['Emotion Regulation', 'State Self Esteem', 'Dartmouth']] # select entries where confidence is greater than 50
+  df = df[df['question_set'].isin(['Emotion Regulation', 'State Self Esteem', 'Dartmouth'])] # select entries where question set belongs to one of the categories
   df['minute'] = df.timestamp.dt.hour*60 + df.timestamp.dt.minute
   minute_groups = df.groupby([df.device_id, df.minute])
   xrange = np.arange(60 * 24)
 
-  iterables = [minute_groups['device_id'].unique(), xrange]
+  quedget_df = minute_groups[['question_id','question_content','question_set','responsecode_0']].agg(lambda x: stats.mode(x)[0]).reset_index()
+  iterables = [quedget_df['device_id'].unique(), xrange]
   quedget_df = quedget_df.set_index(['device_id', 'minute'])
+  print quedget_df.index.is_unique
   quedget_df = quedget_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['device_id', 'minute']), fill_value=0).reset_index()
 
   return quedget_df

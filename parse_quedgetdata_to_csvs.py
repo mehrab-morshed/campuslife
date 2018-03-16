@@ -19,7 +19,7 @@ def loadDataForDays(filepath, numdays):
   with open(filepath) as fp:
     first_line = fp.readline()
     first_line_splits = first_line.strip().split('\t')
-    start_date = datetime.datetime.fromtimestamp(long(first_line_splits[1])/1000.0)
+    start_date = datetime.datetime.fromtimestamp(long(first_line_splits[6])/1000.0)
 
   if start_date is None:
     return

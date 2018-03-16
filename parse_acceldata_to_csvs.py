@@ -2,20 +2,20 @@ import datetime
 import pandas as pd
 
 def main():
-  # loadDataPerDate("./accel.txt", 1)
-  loadDataForDays("/coc/pcba1/schawla32/accel.txt", 20)
+  loadDataForDays("/coc/pcba1/schawla32/accel.txt", 20, 20)
 
 # https://stackoverflow.com/questions/28239529/conditional-row-read-of-csv-in-pandas
-def valid(chunks, startday, numdays):
+def valid(chunks, startdate, enddate):
   for chunk in chunks:
-    mask = chunk['timestamp'].map(lambda x: x.day) < startday+numdays
+    mask = chunk['timestamp'] < enddate && chunk['timestamp'] >= startdate
     if mask.all():
       yield chunk
     else:
       yield chunk.loc[mask]
       break
 
-def loadDataForDays(filepath, numdays):
+def loadDataForDays(filepath, skipdays, numdays):
+  # read first date from file
   start_date = None
   with open(filepath) as fp:
     first_line = fp.readline()
@@ -24,6 +24,10 @@ def loadDataForDays(filepath, numdays):
 
   if start_date is None:
     return
+
+  # add skip days
+  start_date = start_date + datetime.timedelta(days=skipdays)
+  end_date = start_date + datetime.timedelta(days=numdays)
 
   # Read file in chunks
   chunksize = 10 ** 5
@@ -34,11 +38,12 @@ def loadDataForDays(filepath, numdays):
 
   chunks = pd.read_csv(filepath, sep='\t', header=None, names=column_names, usecols=column_indexes,
                        chunksize=chunksize, parse_dates=['timestamp'], date_parser=dateparse)
-  df = pd.concat(valid(chunks, start_date.day, numdays))
+  df = pd.concat(valid(chunks, start_date, end_date))
 
   for i in range(0, numdays):
-    mask = df['timestamp'].map(lambda x: x.day) == start_date.day+i
+    mask = df['timestamp'] == start_date + datetime.timedelta(days=i)
     df_masked = df[mask]
+    # sort by label first, time second
     df_dayi = df_masked.sort_values(['label', 'timestamp'])
     df_dayi.to_csv('day' + str(start_date.day+i) + '.csv', sep='\t', index=False)
 

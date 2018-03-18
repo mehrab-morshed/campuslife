@@ -57,7 +57,6 @@ def quedget_responses(df):
   quedget_df = minute_groups[['question_id','question_content','question_set','responsecode_0']].agg(lambda x: stats.mode(x)[0]).reset_index()
   iterables = [quedget_df['device_id'].unique(), xrange]
   quedget_df = quedget_df.set_index(['device_id', 'minute'])
-  print quedget_df.index.is_unique
   quedget_df = quedget_df.reindex(index=pd.MultiIndex.from_product(iterables, names=['device_id', 'minute']), fill_value=0).reset_index()
 
   return quedget_df

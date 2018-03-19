@@ -4,59 +4,57 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import os
 
 def main():
-#  df = loadData('gregory.txt')
-#  daily_count_from_google(df)
 
-#  df = loadData('userepochs/25a36cd5-9751-4e6e-b047-89e86e740bd5.txt')
+#  df = loadData('25a36cd5-9751-4e6e-b047-89e86e740bd5.txt')
 #  daily_count_from_google(df, '25a36cd5-9751-4e6e-b047-89e86e740bd5')
-#  df = loadData('userepochs/4eb47c96-7193-471c-8d49-1588d0d4db74.txt')
+#  df = loadData('4eb47c96-7193-471c-8d49-1588d0d4db74.txt')
 #  daily_count_from_google(df, '4eb47c96-7193-471c-8d49-1588d0d4db74')
-#  df = loadData('userepochs/afc17c7b-19fa-49b6-8488-4e03d01a4761.txt')
+#  df = loadData('afc17c7b-19fa-49b6-8488-4e03d01a4761.txt')
 #  daily_count_from_google(df, 'afc17c7b-19fa-49b6-8488-4e03d01a4761')
-#  df = loadData('userepochs/7a468788-f9f0-4a80-81f7-de4958df72d8.txt')
-#  daily_count_from_google(df, '7a468788-f9f0-4a80-81f7-de4958df72d8')
-#  df = loadData('userepochs/cfbc3b8e-350f-43d3-b495-adf7e7eb4d82.txt')
-#  daily_count_from_google(df, 'cfbc3b8e-350f-43d3-b495-adf7e7eb4d82')
 
-  df = loadData('25a36cd5-9751-4e6e-b047-89e86e740bd5.txt')
-  daily_count_from_google(df, '25a36cd5-9751-4e6e-b047-89e86e740bd5')
-  df = loadData('4eb47c96-7193-471c-8d49-1588d0d4db74.txt')
-  daily_count_from_google(df, '4eb47c96-7193-471c-8d49-1588d0d4db74')
-  df = loadData('afc17c7b-19fa-49b6-8488-4e03d01a4761.txt')
-  daily_count_from_google(df, 'afc17c7b-19fa-49b6-8488-4e03d01a4761')
 
-  plt.show()
+  for filename in os.listdir('./userepochs/users_data/'):
+    if len(filename.split('-')) > 4:
+      print filename
+      df = loadData('./userepochs/users_data/'+filename)
+      daily_count_from_google(df, filename.split('.')[0])
+
+  #plt.show()
 
 def daily_count_from_google(df, device_id):
-  activity_counts = {}
+  useremadf = pd.DataFrame()
+  with open('./user_ema_data/'+device_id+'.txt', 'w') as device_id_ema_file:
+    # group by device
+    xvals = {}
+    print device_id
+    for device, devicedf in df.groupby(['device_id']):
+      # remove active periods
+      active_labels = ['on_foot', 'walking', 'running', 'on_bicycle']
+      inactivedevicedf = devicedf[~devicedf['activity_name'].isin(active_labels)]
 
-  # group by device
-  print device_id
-  for device, devicedf in df.groupby(['device_id']):
-    # remove active periods
-    active_labels = ['on_foot', 'walking', 'running', 'on_bicycle']
-    devicedf = devicedf[~devicedf['activity_name'].isin(active_labels)]
+      # get sedentary bouts
+      activity_counts = []
+      for k, g in inactivedevicedf.groupby(inactivedevicedf['minute'] - np.arange(inactivedevicedf.shape[0])):
+          activity_counts.append(len(g.index))
 
-    # get sedentary bouts
-    activity_counts[device] = []
-    for k, g in devicedf.groupby(devicedf['minute'] - np.arange(devicedf.shape[0])):
-        activity_counts[device].append(len(g.index))
+      # split sedentary bouts in 10 bins
+      ecdf_vals = ecdf(np.transpose(np.asmatrix(activity_counts)), 11)
+      xvals[device] = np.squeeze(np.asarray(ecdf_vals))
+      area = np.trapz(ecdf_vals)
+      # print auc and ema responses
+      ema_df = devicedf[devicedf['question_content'] != '0'][['device_id', 'minute', 'question_set', 'question_id', 'question_content', 'responsecode_0']]
+      ema_df['ecdf'] = [area] * len(ema_df.index)
+      #print device, 'ecdf(auc)-', area, ema_df
+      useremadf = useremadf.append(ema_df)
 
-    # print ema responses
-    print device, devicedf[devicedf['question_content'] != '0'][['question_set', 'question_content', 'responsecode_0']]
+    #device_id_ema_file.write('day - ' + device + '\n')
+    #device_id_ema_file.write('ecdf(auc) - ' + str(area) + '\n')
+    device_id_ema_file.write(useremadf.to_csv(index=False, sep='\t') + '\n')
 
-  # split sedentary bouts in 10 bins
-  xvals = {}
-  for device, counts in activity_counts.iteritems():
-    ecdf_vals = ecdf(np.transpose(np.asmatrix(counts)), 11)
-    xvals[device] = np.squeeze(np.asarray(ecdf_vals))
-    area = np.trapz(ecdf_vals)
-    print device, "auc:", area
-
-  #print activity_counts
-  plotDataV2(xvals, device_id)
+    plotDataV2(xvals, device_id)
 
 
 def plotDataV2(dic, device_id):
